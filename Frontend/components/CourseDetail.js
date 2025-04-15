@@ -27,10 +27,10 @@ const CourseDetail = () => {
     fetchCourseData();
   }, [id]);
 
-  const handleGradeChange = async (enrollmentId, field, value) => {
+  const handleGradeChange = async (studentId, field, value) => {
     try {
       // Find the student and current grades
-      const student = students.find(s => s.enrollment_id === enrollmentId);
+      const student = students.find(s => s.id === studentId);
       
       // Create updated grades object
       const updatedGrades = {
@@ -43,11 +43,11 @@ const CourseDetail = () => {
       };
       
       // Update the backend
-      await axios.put(`http://localhost:5000/api/grades/${enrollmentId}`, updatedGrades);
+      await axios.put(`http://localhost:5000/api/grades/${studentId}/${id}`, updatedGrades);
       
       // Update local state
       setStudents(students.map(s => {
-        if (s.enrollment_id === enrollmentId) {
+        if (s.id === studentId) {
           return { ...s, [field]: value };
         }
         return s;
@@ -88,7 +88,6 @@ const CourseDetail = () => {
             <div className="col-md-6">
               <p><strong>Course Code:</strong> {course.prefix}-{course.number}-{course.section}</p>
               <p><strong>Title:</strong> {course.title}</p>
-              <p><strong>Instructor:</strong> {course.instructor_name}</p>
             </div>
             <div className="col-md-6">
               <p><strong>Classroom:</strong> {course.classroom}</p>
@@ -110,7 +109,6 @@ const CourseDetail = () => {
                   <tr>
                     <th>Student</th>
                     <th>Email</th>
-                    <th>Major</th>
                     <th>Quiz 1</th>
                     <th>Quiz 2</th>
                     <th>Project 1</th>
@@ -120,14 +118,13 @@ const CourseDetail = () => {
                 </thead>
                 <tbody>
                   {students.map(student => (
-                    <tr key={student.enrollment_id}>
+                    <tr key={student.id}>
                       <td>
                         <Link to={`/students/${student.id}`}>
                           {student.first_name} {student.last_name}
                         </Link>
                       </td>
                       <td>{student.email}</td>
-                      <td>{student.major}</td>
                       <td>
                         <input
                           type="number"
@@ -135,7 +132,7 @@ const CourseDetail = () => {
                           max="100"
                           className="form-control form-control-sm"
                           value={student.quiz1 || 0}
-                          onChange={(e) => handleGradeChange(student.enrollment_id, 'quiz1', parseFloat(e.target.value))}
+                          onChange={(e) => handleGradeChange(student.id, 'quiz1', parseFloat(e.target.value))}
                         />
                       </td>
                       <td>
@@ -145,7 +142,7 @@ const CourseDetail = () => {
                           max="100"
                           className="form-control form-control-sm"
                           value={student.quiz2 || 0}
-                          onChange={(e) => handleGradeChange(student.enrollment_id, 'quiz2', parseFloat(e.target.value))}
+                          onChange={(e) => handleGradeChange(student.id, 'quiz2', parseFloat(e.target.value))}
                         />
                       </td>
                       <td>
@@ -155,7 +152,7 @@ const CourseDetail = () => {
                           max="100"
                           className="form-control form-control-sm"
                           value={student.project1 || 0}
-                          onChange={(e) => handleGradeChange(student.enrollment_id, 'project1', parseFloat(e.target.value))}
+                          onChange={(e) => handleGradeChange(student.id, 'project1', parseFloat(e.target.value))}
                         />
                       </td>
                       <td>
@@ -165,7 +162,7 @@ const CourseDetail = () => {
                           max="100"
                           className="form-control form-control-sm"
                           value={student.project2 || 0}
-                          onChange={(e) => handleGradeChange(student.enrollment_id, 'project2', parseFloat(e.target.value))}
+                          onChange={(e) => handleGradeChange(student.id, 'project2', parseFloat(e.target.value))}
                         />
                       </td>
                       <td>
@@ -175,7 +172,7 @@ const CourseDetail = () => {
                           max="100"
                           className="form-control form-control-sm"
                           value={student.final_exam || 0}
-                          onChange={(e) => handleGradeChange(student.enrollment_id, 'finalExam', parseFloat(e.target.value))}
+                          onChange={(e) => handleGradeChange(student.id, 'finalExam', parseFloat(e.target.value))}
                         />
                       </td>
                     </tr>

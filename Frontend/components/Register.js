@@ -6,10 +6,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    email: ''
+    confirmPassword: ''
   });
   
   const { register, error } = useContext(AuthContext);
@@ -33,10 +30,7 @@ const Register = () => {
     try {
       await register({
         username: formData.username,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email
+        password: formData.password
       });
       
       navigate('/login');
@@ -62,39 +56,6 @@ const Register = () => {
                   className="form-control"
                   name="username"
                   value={formData.username}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group mb-3">
-                <label>First Name:</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group mb-3">
-                <label>Last Name:</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-group mb-3">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  name="email"
-                  value={formData.email}
                   onChange={handleChange}
                   required
                 />

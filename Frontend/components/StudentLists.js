@@ -49,7 +49,7 @@ const StudentList = () => {
                 <tr key={student.id}>
                   <td>{student.first_name} {student.last_name}</td>
                   <td>{student.email}</td>
-                  <td>{student.major}</td>
+                  <td>{student.major_name || student.major}</td>
                   <td>{student.graduating_year}</td>
                   <td>
                     <Link to={`/students/${student.id}`} className="btn btn-sm btn-info">

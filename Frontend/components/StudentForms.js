@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -7,12 +7,28 @@ const StudentForm = () => {
     firstName: '',
     lastName: '',
     email: '',
-    major: '',
+    majorId: '',
     graduatingYear: ''
   });
   
+  const [majors, setMajors] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch majors for dropdown
+    const fetchMajors = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/majors');
+        setMajors(response.data);
+      } catch (error) {
+        console.error('Error fetching majors:', error);
+        setError('Failed to load majors. Please try again.');
+      }
+    };
+
+    fetchMajors();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -82,14 +98,20 @@ const StudentForm = () => {
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label className="form-label">Major</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="major"
-                  value={formData.major}
+                <select
+                  className="form-select"
+                  name="majorId"
+                  value={formData.majorId}
                   onChange={handleChange}
                   required
-                />
+                >
+                  <option value="">-- Select Major --</option>
+                  {majors.map(major => (
+                    <option key={major.id} value={major.id}>
+                      {major.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="col-md-6 mb-3">
                 <label className="form-label">Graduating Year</label>

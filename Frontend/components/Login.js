@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('ADMIN');
+  const [password, setPassword] = useState('ADMIN');
   const { login, error } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -38,6 +38,7 @@ const Login = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
+                <small className="text-muted">Default: ADMIN</small>
               </div>
               <div className="form-group mb-3">
                 <label>Password:</label>
@@ -48,6 +49,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <small className="text-muted">Default: ADMIN</small>
               </div>
               <button type="submit" className="btn btn-primary w-100">
                 Login

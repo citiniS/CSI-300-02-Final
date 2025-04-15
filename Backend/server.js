@@ -47,21 +47,44 @@ async function initializeDatabase() {
 
   // Create tables if they don't exist
   await db.exec(`
+    -- Drop existing tables if they exist
+    DROP TABLE IF EXISTS course_materials;
+    DROP TABLE IF EXISTS grades;
+    DROP TABLE IF EXISTS enrollments;
+    DROP TABLE IF EXISTS students;
+    DROP TABLE IF EXISTS courses;
+    DROP TABLE IF EXISTS instructors;
+    DROP TABLE IF EXISTS majors;
+    
+    -- Create tables based on the new schema
     CREATE TABLE IF NOT EXISTS instructors (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS majors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL
+    );
+    
+    CREATE TABLE IF NOT EXISTS students (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       first_name TEXT NOT NULL,
       last_name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      major_id INTEGER NOT NULL,
+      graduating_year INTEGER NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (major_id) REFERENCES majors(id) ON DELETE CASCADE
     );
-
+    
     CREATE TABLE IF NOT EXISTS courses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       prefix TEXT NOT NULL,
-      number TEXT NOT NULL,
-      section TEXT NOT NULL,
+      number INTEGER NOT NULL,
+      section INTEGER NOT NULL,
       title TEXT NOT NULL,
       classroom TEXT NOT NULL,
       start_time TEXT NOT NULL,
@@ -70,17 +93,7 @@ async function initializeDatabase() {
       UNIQUE(prefix, number, section),
       FOREIGN KEY (instructor_id) REFERENCES instructors(id)
     );
-
-    CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      major TEXT NOT NULL,
-      graduating_year INTEGER NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
+    
     CREATE TABLE IF NOT EXISTS enrollments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       student_id INTEGER NOT NULL,
@@ -90,20 +103,21 @@ async function initializeDatabase() {
       FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
       FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
     );
-
+    
     CREATE TABLE IF NOT EXISTS grades (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      enrollment_id INTEGER NOT NULL,
+      student_id INTEGER NOT NULL,
+      course_id INTEGER NOT NULL,
       quiz1 REAL DEFAULT 0,
       quiz2 REAL DEFAULT 0,
       project1 REAL DEFAULT 0,
       project2 REAL DEFAULT 0,
       final_exam REAL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(enrollment_id),
-      FOREIGN KEY (enrollment_id) REFERENCES enrollments(id) ON DELETE CASCADE
+      FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+      FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
     );
-
+    
     CREATE TABLE IF NOT EXISTS course_materials (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       course_id INTEGER NOT NULL,
@@ -113,6 +127,29 @@ async function initializeDatabase() {
       FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
     );
   `);
+
+  // Check if there are any instructors in the database
+  const instructorCount = await db.get('SELECT COUNT(*) as count FROM instructors');
+  
+  // If no instructors exist, create a default admin account
+  if (instructorCount.count === 0) {
+    const hashedPassword = await bcrypt.hash('ADMIN', 10);
+    await db.run(
+      'INSERT INTO instructors (username, password) VALUES (?, ?)',
+      ['ADMIN', hashedPassword]
+    );
+    console.log('Default admin account created');
+  }
+
+  // Initialize majors from the provided schema
+  await db.run(`
+    INSERT INTO majors (name) VALUES 
+    ('Computer Science and Innovation'),
+    ('Data Science'),
+    ('Cybersecurity'),
+    ('Digital Forensics')
+  `);
+  console.log('Majors initialized');
 
   return db;
 }
@@ -145,13 +182,13 @@ let db;
     // Instructor authentication routes
     app.post('/api/instructors/register', async (req, res) => {
       try {
-        const { username, password, firstName, lastName, email } = req.body;
+        const { username, password } = req.body;
         
         const hashedPassword = await bcrypt.hash(password, 10);
         
         await db.run(
-          'INSERT INTO instructors (username, password, first_name, last_name, email) VALUES (?, ?, ?, ?, ?)',
-          [username, hashedPassword, firstName, lastName, email]
+          'INSERT INTO instructors (username, password) VALUES (?, ?)',
+          [username, hashedPassword]
         );
         
         res.status(201).json({ message: 'Instructor registered successfully' });
@@ -178,7 +215,7 @@ let db;
         
         const token = jwt.sign({ id: instructor.id, username }, JWT_SECRET, { expiresIn: '1h' });
         
-        res.json({ token, instructor: { id: instructor.id, username, firstName: instructor.first_name, lastName: instructor.last_name } });
+        res.json({ token, instructor: { id: instructor.id, username } });
       } catch (error) {
         res.status(500).json({ message: error.message });
       }
@@ -246,11 +283,11 @@ let db;
     // Student routes
     app.post('/api/students', authenticateToken, async (req, res) => {
       try {
-        const { firstName, lastName, email, major, graduatingYear } = req.body;
+        const { firstName, lastName, email, majorId, graduatingYear } = req.body;
         
         const result = await db.run(
-          'INSERT INTO students (first_name, last_name, email, major, graduating_year) VALUES (?, ?, ?, ?, ?)',
-          [firstName, lastName, email, major, graduatingYear]
+          'INSERT INTO students (first_name, last_name, email, major_id, graduating_year) VALUES (?, ?, ?, ?, ?)',
+          [firstName, lastName, email, majorId, graduatingYear]
         );
         
         res.status(201).json({ 
@@ -258,7 +295,7 @@ let db;
           firstName,
           lastName,
           email,
-          major,
+          majorId,
           graduatingYear
         });
       } catch (error) {
@@ -268,8 +305,22 @@ let db;
 
     app.get('/api/students', authenticateToken, async (req, res) => {
       try {
-        const students = await db.all('SELECT * FROM students');
+        const students = await db.all(`
+          SELECT s.*, m.name as major_name 
+          FROM students s
+          JOIN majors m ON s.major_id = m.id
+        `);
         res.json(students);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    });
+    
+    // Get major list
+    app.get('/api/majors', async (req, res) => {
+      try {
+        const majors = await db.all('SELECT * FROM majors');
+        res.json(majors);
       } catch (error) {
         res.status(500).json({ message: error.message });
       }
@@ -302,10 +353,10 @@ let db;
           [studentId, courseId]
         );
         
-        // Create empty grade record
+        // Create grade record
         await db.run(
-          'INSERT INTO grades (enrollment_id) VALUES (?)',
-          [result.lastID]
+          'INSERT INTO grades (student_id, course_id) VALUES (?, ?)',
+          [studentId, courseId]
         );
         
         res.status(201).json({ 
@@ -323,10 +374,10 @@ let db;
         const { courseId } = req.params;
         
         const students = await db.all(`
-          SELECT s.*, e.id as enrollment_id, g.*
+          SELECT s.*, g.quiz1, g.quiz2, g.project1, g.project2, g.final_exam
           FROM students s
           JOIN enrollments e ON s.id = e.student_id
-          LEFT JOIN grades g ON e.id = g.enrollment_id
+          LEFT JOIN grades g ON e.student_id = g.student_id AND e.course_id = g.course_id
           WHERE e.course_id = ?
         `, [courseId]);
         
@@ -341,10 +392,10 @@ let db;
         const { studentId } = req.params;
         
         const courses = await db.all(`
-          SELECT c.*, e.id as enrollment_id, g.*
+          SELECT c.*, g.quiz1, g.quiz2, g.project1, g.project2, g.final_exam
           FROM courses c
           JOIN enrollments e ON c.id = e.course_id
-          LEFT JOIN grades g ON e.id = g.enrollment_id
+          LEFT JOIN grades g ON e.student_id = g.student_id AND e.course_id = g.course_id
           WHERE e.student_id = ?
         `, [studentId]);
         
@@ -355,17 +406,35 @@ let db;
     });
 
     // Grades routes
-    app.put('/api/grades/:enrollmentId', authenticateToken, async (req, res) => {
+    app.put('/api/grades/:studentId/:courseId', authenticateToken, async (req, res) => {
       try {
-        const { enrollmentId } = req.params;
+        const { studentId, courseId } = req.params;
         const { quiz1, quiz2, project1, project2, finalExam } = req.body;
         
-        await db.run(
-          'UPDATE grades SET quiz1 = ?, quiz2 = ?, project1 = ?, project2 = ?, final_exam = ? WHERE enrollment_id = ?',
-          [quiz1, quiz2, project1, project2, finalExam, enrollmentId]
+        // Check if grade record exists
+        const existingGrade = await db.get(
+          'SELECT * FROM grades WHERE student_id = ? AND course_id = ?', 
+          [studentId, courseId]
         );
         
-        const updatedGrade = await db.get('SELECT * FROM grades WHERE enrollment_id = ?', [enrollmentId]);
+        if (!existingGrade) {
+          // Create new grade record if it doesn't exist
+          await db.run(
+            'INSERT INTO grades (student_id, course_id, quiz1, quiz2, project1, project2, final_exam) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [studentId, courseId, quiz1, quiz2, project1, project2, finalExam]
+          );
+        } else {
+          // Update existing grade record
+          await db.run(
+            'UPDATE grades SET quiz1 = ?, quiz2 = ?, project1 = ?, project2 = ?, final_exam = ? WHERE student_id = ? AND course_id = ?',
+            [quiz1, quiz2, project1, project2, finalExam, studentId, courseId]
+          );
+        }
+        
+        const updatedGrade = await db.get(
+          'SELECT * FROM grades WHERE student_id = ? AND course_id = ?', 
+          [studentId, courseId]
+        );
         
         res.json(updatedGrade);
       } catch (error) {

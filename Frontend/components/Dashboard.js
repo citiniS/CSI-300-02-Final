@@ -36,7 +36,7 @@ const Dashboard = () => {
         <div className="col-md-6">
           <div className="card mb-4">
             <div className="card-header">
-              <h4>Welcome, {user?.firstName} {user?.lastName}!</h4>
+              <h4>Welcome, Instructor!</h4>
             </div>
             <div className="card-body">
               <p>Use the navigation above to manage your courses, students, and enrollments.</p>
@@ -75,3 +75,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
