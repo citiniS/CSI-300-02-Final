@@ -9,12 +9,12 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import CourseList from './components/CourseList';
 import CourseDetail from './components/CourseDetail';
-import StudentList from './components/StudentList';
-import StudentDetail from './components/StudentDetail';
+import StudentList from './components/StudentLists';
+import StudentDetail from './components/StudentDetails';
 import EnrollmentForm from './components/EnrollmentForm';
 import CourseMaterials from './components/CourseMaterials';
 import CourseForm from './components/CourseForm';
-import StudentForm from './components/StudentForm';
+import StudentForm from './components/StudentForms';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
