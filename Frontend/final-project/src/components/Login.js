@@ -13,9 +13,9 @@ const Login = () => {
     
     try {
       await login(username, password);
-      navigate('/dashboard');
+      navigate('/dashboard');  // Redirect to dashboard on successful login
     } catch (err) {
-      console.error('Login failed:', err);
+      console.error('Login failed:', err);  // Log error to console
     }
   };
 
@@ -27,7 +27,7 @@ const Login = () => {
             <h3 className="text-center">Instructor Login</h3>
           </div>
           <div className="card-body">
-            {error && <div className="alert alert-danger">{error}</div>}
+            {error && <div className="alert alert-danger">{error}</div>} {/* Show error if present */}
             <form onSubmit={handleSubmit}>
               <div className="form-group mb-3">
                 <label>Username:</label>

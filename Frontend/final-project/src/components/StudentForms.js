@@ -2,21 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const StudentForm = () => {
+const StudentForm = ({ fetchStudents }) => {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    majorId: '',
-    graduatingYear: ''
+    major_id: '',
+    graduating_year: ''
   });
-  
+
   const [majors, setMajors] = useState([]);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch majors for dropdown
     const fetchMajors = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/majors');
@@ -39,12 +38,26 @@ const StudentForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Debugging: Log the form data being sent to the API
+    console.log('Submitting student data:', formData);
+
     try {
-      await axios.post('http://localhost:5000/api/students', formData);
-      navigate('/students');
+      const response = await axios.post('http://localhost:5000/api/students', formData);
+
+      // Debugging: Log the response from the API
+      console.log('Response from adding student:', response);
+
+      // After successfully adding the student, fetch the updated student list
+      fetchStudents();
+
+      navigate('/students');  // Navigate to the student list page
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred while adding the student');
+      // Handle specific error messages from the backend
+      const errorMessage = err.response?.data?.message || 'An error occurred while adding the student';
+      setError(errorMessage);
+
+      // Debugging: Log the full error response
       console.error('Error adding student:', err);
     }
   };
@@ -52,9 +65,9 @@ const StudentForm = () => {
   return (
     <div>
       <h2>Add New Student</h2>
-      
+
       {error && <div className="alert alert-danger">{error}</div>}
-      
+
       <div className="card">
         <div className="card-body">
           <form onSubmit={handleSubmit}>
@@ -64,8 +77,8 @@ const StudentForm = () => {
                 <input
                   type="text"
                   className="form-control"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="first_name"  // Change to snake_case
+                  value={formData.first_name}  // Update to snake_case
                   onChange={handleChange}
                   required
                 />
@@ -75,14 +88,14 @@ const StudentForm = () => {
                 <input
                   type="text"
                   className="form-control"
-                  name="lastName"
-                  value={formData.lastName}
+                  name="last_name"  // Change to snake_case
+                  value={formData.last_name}  // Update to snake_case
                   onChange={handleChange}
                   required
                 />
               </div>
             </div>
-            
+
             <div className="mb-3">
               <label className="form-label">Email</label>
               <input
@@ -94,19 +107,19 @@ const StudentForm = () => {
                 required
               />
             </div>
-            
+
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label className="form-label">Major</label>
                 <select
                   className="form-select"
-                  name="majorId"
-                  value={formData.majorId}
+                  name="major_id"  // Change to snake_case
+                  value={formData.major_id}  // Update to snake_case
                   onChange={handleChange}
                   required
                 >
                   <option value="">-- Select Major --</option>
-                  {majors.map(major => (
+                  {majors.map((major) => (
                     <option key={major.id} value={major.id}>
                       {major.name}
                     </option>
@@ -118,8 +131,8 @@ const StudentForm = () => {
                 <input
                   type="number"
                   className="form-control"
-                  name="graduatingYear"
-                  value={formData.graduatingYear}
+                  name="graduating_year"  // Change to snake_case
+                  value={formData.graduating_year}  // Update to snake_case
                   onChange={handleChange}
                   min={new Date().getFullYear()}
                   max={new Date().getFullYear() + 10}
@@ -127,7 +140,7 @@ const StudentForm = () => {
                 />
               </div>
             </div>
-            
+
             <div className="d-flex justify-content-end">
               <button type="button" className="btn btn-secondary me-2" onClick={() => navigate('/students')}>
                 Cancel

@@ -6,18 +6,20 @@ const StudentList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/students');
-        setStudents(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching students:', error);
-        setLoading(false);
-      }
-    };
+  // Fetch students function
+  const fetchStudents = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/students');
+      setStudents(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      setLoading(false);
+    }
+  };
 
+  // Initial fetch when component mounts
+  useEffect(() => {
     fetchStudents();
   }, []);
 
@@ -45,7 +47,7 @@ const StudentList = () => {
               </tr>
             </thead>
             <tbody>
-              {students.map(student => (
+              {students.map((student) => (
                 <tr key={student.id}>
                   <td>{student.first_name} {student.last_name}</td>
                   <td>{student.email}</td>

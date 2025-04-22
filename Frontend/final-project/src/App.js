@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';  // Import useState
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import axios from 'axios';  // Import axios
 
 // Components
 import Navbar from './components/Navbar';
@@ -21,6 +22,18 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
+  const [students, setStudents] = useState([]);  // Define students and setStudents using useState
+
+  // Fetch students function
+  const fetchStudents = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/students');
+      setStudents(response.data);  // Set the students state after fetching
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
+  };
+
   return (
     <AuthProvider>
       <Router>
@@ -28,80 +41,78 @@ function App() {
           <Navbar />
           <div className="container mt-4">
             <Routes>
+              {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                } 
-              />
+              <Route path="/dashboard" element={<Dashboard />} />
+
+              {/* Protected Routes wrapped with PrivateRoute */}
               <Route 
                 path="/courses" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <CourseList />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/courses/new" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <CourseForm />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/courses/:id" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <CourseDetail />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/courses/:id/materials" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <CourseMaterials />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/students" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <StudentList />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/students/new" 
-                element={
+                element={ 
                   <PrivateRoute>
-                    <StudentForm />
-                  </PrivateRoute>
+                    <StudentForm fetchStudents={fetchStudents} />  {/* Pass fetchStudents to StudentForm */}
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/students/:id" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <StudentDetail />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
               <Route 
                 path="/enroll" 
-                element={
+                element={ 
                   <PrivateRoute>
                     <EnrollmentForm />
-                  </PrivateRoute>
+                  </PrivateRoute> 
                 } 
               />
+
+              {/* Default route redirects to /dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </div>

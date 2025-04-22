@@ -1,3 +1,4 @@
+
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -24,17 +25,26 @@ const CourseForm = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  // In CourseForm.js - find the existing handleSubmit function
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    try {
-      await axios.post('http://localhost:5000/api/courses', formData);
-      navigate('/courses');
-    } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred while adding the course');
-      console.error('Error adding course:', err);
-    }
+  
+    axios.post('http://localhost:5000/api/courses', formData)
+      .then((response) => {
+        console.log("Server response:", response.data);
+        navigate('/courses');
+      })
+      .catch((error) => {
+        console.error('Error submitting course:', error);
+      });
   };
+  
+  
+  
+  
+  // Add this line
+  console.log("Form data being sent:", formData);
+  
 
   return (
     <div>
@@ -137,5 +147,8 @@ const CourseForm = () => {
     </div>
   );
 };
+
+
+
 
 export default CourseForm;

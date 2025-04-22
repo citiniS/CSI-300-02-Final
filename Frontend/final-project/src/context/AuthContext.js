@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(userData));
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
-    
+
     setLoading(false);
   }, []);
 
@@ -25,13 +25,13 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await axios.post('http://localhost:5000/api/instructors/login', { username, password });
       const { token, instructor } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(instructor));
-      
+
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(instructor);
-      
+
       return instructor;
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred during login');
@@ -54,7 +54,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
-    setUser(null);
+    setUser(null); // This updates the context, making sure the user state is null
+
+    // After logout, you can trigger redirection manually in the component (Navbar)
   };
 
   const isAuthenticated = () => {

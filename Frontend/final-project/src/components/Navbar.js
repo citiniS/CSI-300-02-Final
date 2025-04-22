@@ -8,14 +8,15 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    // Redirect to the dashboard after logging out
+    navigate('/dashboard');
   };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container">
         <Link className="navbar-brand" to="/">
-          University Course Management
+          Champlain College CSI-300-02 Final Project
         </Link>
         <button
           className="navbar-toggler"
@@ -60,11 +61,6 @@ const Navbar = () => {
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">
                     Login
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/register">
-                    Register
                   </Link>
                 </li>
               </>
